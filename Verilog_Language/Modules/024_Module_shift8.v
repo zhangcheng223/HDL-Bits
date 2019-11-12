@@ -2,7 +2,7 @@ module top_module (
     input clk, 
     input [7:0] d, 
     input [1:0] sel, 
-    output [7:0] q 
+    output reg [7:0] q 
 );
 
 wire [7:0] q1;
