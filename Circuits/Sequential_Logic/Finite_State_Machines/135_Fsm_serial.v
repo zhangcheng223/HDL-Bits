@@ -1,3 +1,24 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 2019/11/18 10:17:28
+// Design Name: 
+// Module Name: Fsm_serial
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
 module top_module(
     input clk,
     input in,
@@ -5,15 +26,16 @@ module top_module(
     output done
 ); 
 
-parameter Idle = 3'b000;
-parameter Start = 3'b001;
-parameter Data = 3'b010;
-parameter Stop = 3'b011;
-parameter Done = 3'b100;
+parameter Idle = 2'b00;
+parameter Start = 2'b01;
+parameter Data = 2'b10;
+parameter Done = 2'b11;
 
-reg [2:0] state;
-reg [2:0] next_state;
-reg [4:0] i;
+reg [1:0] state;
+reg [1:0] next_state;
+reg [3:0] i;
+reg in_last;
+
 
 // sequential logic reset
 always @(posedge clk)
@@ -22,47 +44,41 @@ begin
         state <= Idle;
     else
         state <= next_state;
-end
 
-// control i
-always @(posedge clk)
-begin
+    // control i
     case(state)
-        Start:  i <=0;
-        Data: i <= i + 5'b001;
-        Stop: i <= 0;
-        Done: i <= 0;
-        default: i <= 0;
+        Idle: i <= 4'b0000;
+        Start:  i <= 4'b0000;
+        Data: i <= i + 4'b0001;
+        Done: i <= 4'b0000;
+        default: i <= 4'b0000;
     endcase
+
+    in_last <= in;
 end
 
 // combinational state transition logic
 always @(*)
 begin
     case(state)
-        Idle :  
-            if(in)
+        Idle:
+            if((in == 1'b0) && (in_last == 1'b1))
                 next_state = Start;
             else
                 next_state = Idle;
         Start:
-            if(!in)
-                next_state = Data;
-            else
-                next_state = Start;
+            next_state = Data;
         Data:
-            if(i<=5'b0111)
+            if(i<=4'b0110)
                 next_state = Data;
             else
-                next_state = Stop;
-        Stop:
-            if(in)
-                next_state = Done;
-            else
-                next_state = Idle;
+                if((in==1'b1)&&(in_last == 1'b0))
+                    next_state = Done;
+                else
+                    next_state = Idle;
         Done:
-            if(!in)
-                next_state = Data;
+            if((in == 1'b0) && (in_last == 1'b1))
+                next_state = Start;
             else
                 next_state = Idle;
         default: next_state = 2'bx;
